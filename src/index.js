@@ -1,3 +1,4 @@
+// Import required modules
 const express = require("express");
 require("./db/mongoose.js");
 const userRoute = require("./routes/userRoute");
@@ -10,7 +11,7 @@ const port = process.env.PORT || 8080;
 // Swagger configuration
 const path = require("path");
 
-const options = {
+const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
@@ -35,7 +36,7 @@ const options = {
   apis: [path.join(__dirname, "./routes/*.js")],
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 // Middlewares
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
@@ -44,5 +45,5 @@ app.use(userRoute);
 
 // Start the server
 app.listen(port, () => {
-  console.log(`listening to port ${port}`);
+  console.log(`Server is listening on port ${port}`);
 });

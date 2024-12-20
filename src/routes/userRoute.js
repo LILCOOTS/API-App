@@ -1,9 +1,10 @@
+// Import required modules
 const express = require("express");
 const userRoute = new express.Router();
 const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
-const auth = require("../middleware/auth");
-const sendWelcomeMail = require("../email/email");
+const authenticateUser = require("../middleware/auth");
+const sendWelcomeEmail = require("../email/email");
 
 /**
  * @swagger
@@ -67,27 +68,29 @@ const sendWelcomeMail = require("../email/email");
  *                   example: "Email already exists."
  */
 
+// Route to handle user signup
 userRoute.post("/api/signup", async (req, res) => {
   try {
-    const user = new userModel(req.body);
-    await user.save();
-    const authToken = await user.createAuthToken();
+    const newUser = new userModel(req.body);
+    await newUser.save();
+    const authToken = await newUser.createAuthToken();
 
     const confirmationLink = `http://localhost:8080/api/confirm-email?token=${authToken}`;
 
-    sendWelcomeMail(user.email, user.username, confirmationLink);
-    res.send({ user, authToken });
-  } catch (e) {
-    res.status(500).send(e);
+    sendWelcomeEmail(newUser.email, newUser.username, confirmationLink);
+    res.send({ user: newUser, authToken });
+  } catch (error) {
+    res.status(500).send(error);
   }
 });
 
+// Route to handle email confirmation
 userRoute.get("/api/confirm-email", async (req, res) => {
   try {
     const token = req.query.token;
-    const isValid = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    const user = await userModel.findById(isValid._id);
+    const user = await userModel.findById(decodedToken._id);
     if (!user) {
       res.status(404).send("User not found");
     }
@@ -95,7 +98,7 @@ userRoute.get("/api/confirm-email", async (req, res) => {
     await user.save();
 
     res.send("Your email has been successfully confirmed!");
-  } catch (e) {
+  } catch (error) {
     res.status(500).send("Invalid or expired token.");
   }
 });
@@ -128,6 +131,7 @@ userRoute.get("/api/confirm-email", async (req, res) => {
  *         description: User not found or server error.
  */
 
+// Route to handle user login
 userRoute.post("/api/login", async (req, res) => {
   try {
     const user = await userModel.findByCredentials(
@@ -142,8 +146,8 @@ userRoute.post("/api/login", async (req, res) => {
     }
     const authToken = await user.createAuthToken();
     res.send({ user, authToken });
-  } catch (e) {
-    res.status(500).send(e);
+  } catch (error) {
+    res.status(500).send(error);
   }
 });
 
@@ -164,7 +168,8 @@ userRoute.post("/api/login", async (req, res) => {
  *         description: User not found.
  */
 
-userRoute.get("/api/profile", auth, async (req, res) => {
+// Route to get user profile
+userRoute.get("/api/profile", authenticateUser, async (req, res) => {
   try {
     if (!req.user.isConfirmed) {
       return res.status(403).send({
@@ -172,8 +177,8 @@ userRoute.get("/api/profile", auth, async (req, res) => {
       });
     }
     res.send(req.user);
-  } catch (e) {
-    res.status(404).send(e);
+  } catch (error) {
+    res.status(404).send(error);
   }
 });
 

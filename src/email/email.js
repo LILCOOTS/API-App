@@ -1,15 +1,23 @@
+// Import SendGrid module
 const sendGrid = require("@sendgrid/mail");
-const sendgrid_api_key = process.env.SGMAIL_API_KEY;
-sendGrid.setApiKey(sendgrid_api_key);
 
-const sendWelcomeMail = async (toEmail, username, confirmationLink) => {
+// Set SendGrid API key from environment variable
+const sendGridApiKey = process.env.SGMAIL_API_KEY;
+sendGrid.setApiKey(sendGridApiKey);
+
+// Function to send a welcome email
+const sendWelcomeEmail = async (
+  recipientEmail,
+  recipientUsername,
+  confirmationLink,
+) => {
   try {
-    msg = {
-      to: toEmail,
+    const emailMessage = {
+      to: recipientEmail,
       from: "omasanani02@gmail.com",
       subject: "Confirmation of the signup request",
       html: `
-        <h1>Welcome, ${username}!</h1>
+        <h1>Welcome, ${recipientUsername}!</h1>
         <p>Thank you for signing up. Please confirm your email by clicking the link below:</p>
         <a href="${confirmationLink}" style="color: blue; text-decoration: underline;">
           Confirm Your Email
@@ -18,11 +26,11 @@ const sendWelcomeMail = async (toEmail, username, confirmationLink) => {
       `,
     };
 
-    const response = await sendGrid.send(msg);
-    console.log(response);
-  } catch (e) {
-    console.log(e.response);
+    const response = await sendGrid.send(emailMessage);
+    console.log("Email sent successfully:", response);
+  } catch (error) {
+    console.error("Error sending email:", error.response);
   }
 };
 
-module.exports = sendWelcomeMail;
+module.exports = sendWelcomeEmail;

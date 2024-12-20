@@ -1,12 +1,14 @@
+// Import required modules
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/userModel");
 
-const auth = async (req, res, next) => {
+// Authentication middleware
+const authenticateUser = async (req, res, next) => {
   try {
     const token = req.headers["authorization"].replace("Bearer ", "");
-    const isAuthToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const user = await userModel.findOne({
-      _id: isAuthToken._id,
+      _id: decodedToken._id,
       "tokens.token": token,
     });
 
@@ -16,9 +18,9 @@ const auth = async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (e) {
-    res.status(404).send("Please Authenticate Yourself");
+  } catch (error) {
+    res.status(404).send("Please authenticate yourself.");
   }
 };
 
-module.exports = auth;
+module.exports = authenticateUser;
